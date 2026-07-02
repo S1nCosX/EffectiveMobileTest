@@ -1,0 +1,47 @@
+services:
+  db:
+    image: postgres:latest
+    volumes:
+      - ./psqldata:/var/lib/postgresql/data 
+    environment:
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PW
+    healthcheck:
+      test: ["CMD", "pg_isready -U ${DB_USER}"]
+      interval: 15s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  consul:
+    image: consul:1.15
+    command: agent -dev -client=0.0.0.0
+
+  server:
+    build: ./server
+    depends_on:
+      - db
+      - consul
+    deploy:
+      replicas: $REPLICAS
+    healthcheck:
+      test: ["CMD", "curl -GET localhost:80/healthcheck"]
+      interval: 15s
+      timeout: 1s
+      retries: 5
+      start_period: 30s
+    restart: always
+
+  nginx:
+    image: nginx:stable-alpine-slim
+    depends_on:
+      - server
+    volumes: 
+      - ./nginx:/etc/nginx/conf.d
+    ports:
+      - $NGINX_PORT:80
+    environment:
+      - NGINX_PORT:80
+      - NGINX_HOST:$HOST
