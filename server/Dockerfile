@@ -6,4 +6,4 @@ RUN GOOS=linux go build -a -o server .
 FROM alpine:3.24
 WORKDIR /root/
 COPY --from=builder /src/server .
-CMD ["./server"]
+CMD ["./server"] 

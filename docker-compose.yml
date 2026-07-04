@@ -1,14 +1,15 @@
 services:
   db:
-    image: postgres:latest
+    container_name: db
+    image: postgres:18.4-alpine3.24
     volumes:
-      - ./psqldata:/var/lib/postgresql/data 
+      - ./psqldata:/var/lib/postgresql 
     environment:
       - POSTGRES_DB=$DB_NAME
       - POSTGRES_USER=$DB_USER
       - POSTGRES_PASSWORD=$DB_PW
     healthcheck:
-      test: ["CMD", "pg_isready -U ${DB_USER}"]
+      test: ["CMD", "pg_isready", "-U",  "${DB_USER}"]
       interval: 15s
       timeout: 1s
       retries: 5
@@ -16,25 +17,41 @@ services:
     restart: always
 
   consul:
+    container_name: consul
     image: consul:1.15
     command: agent -dev -client=0.0.0.0
-
-  server:
-    build: ./server
-    depends_on:
-      - db
-      - consul
-    deploy:
-      replicas: $REPLICAS
+    ports:
+      - "8500:8500"
     healthcheck:
-      test: ["CMD", "curl -GET localhost:80/healthcheck"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8500/v1/status/leader"]
       interval: 15s
       timeout: 1s
       retries: 5
       start_period: 30s
     restart: always
 
+  server:
+    build: ./server
+    depends_on:
+      db:
+        condition: service_healthy
+      consul:
+        condition: service_healthy
+    deploy:
+      replicas: ${REPLICAS}
+    environment:
+      - HOST=${HOST}
+      - PORT=${PORT}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 1s
+      retries: 5
+      start_period: 5s
+    restart: always
+
   nginx:
+    container_name: nginx
     image: nginx:stable-alpine-slim
     depends_on:
       - server
