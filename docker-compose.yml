@@ -50,15 +50,17 @@ services:
       start_period: 5s
     restart: always
 
-  nginx:
-    container_name: nginx
-    image: nginx:stable-alpine-slim
+  balancer:
+    container_name: balancer
+    build: ./haproxy
     depends_on:
       - server
-    volumes: 
-      - ./nginx:/etc/nginx/conf.d
     ports:
-      - $NGINX_PORT:80
+      - $BALANCER_PORT:80
+    volumes:
+      - ./haproxy/haproxy.cfg.tmpl:/etc/haproxy/haproxy.cfg.tmpl
     environment:
-      - NGINX_PORT:80
-      - NGINX_HOST:$HOST
+      - CONSUL_ADDR=${CONSUL_ADDR}
+      - CONSUL_PORT=${CONSUL_PORT}
+      - HEALTH_CHECK_TIMEOUT=${HEALTH_CHECK_TIMEOUT}
+    restart: always

@@ -16,10 +16,13 @@ func main() {
 			func(w http.ResponseWriter, r *http.Request) {
 				mainLog.Print("Got request: ", r)
 				if r.Method != "GET" {
-					mainLog.Print("Got wrong request type")
+					mainLog.Print("Got wrong request type:", r.Method, "instead of GET")
 				}
 				w.WriteHeader(200)
-				w.Write([]byte("Health is OK"))
+				_, err := w.Write([]byte("Health is OK"))
+				if err != nil {
+					mainLog.Print("During response got error:", err)
+				}
 			},
 		),
 	)

@@ -1,0 +1,22 @@
+global
+    user haproxy
+    group haproxy
+
+defaults
+    mode http
+    timeout connect 5s
+    timeout client 15s
+    timeout server 15s
+
+frontend http-in
+    bind 0.0.0.0:80
+    default_backend servers
+
+backend servers
+    balance leastconn
+    option httpchk /health
+{{ range service "server" }}
+    {{ if eq .Status "passing"}}
+    server {{ .ID }} {{ .Address }}:{{ .Port }} check
+    {{ end }}
+{{end}}

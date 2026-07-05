@@ -34,9 +34,9 @@ func Register() {
 			Check: &api.AgentServiceCheck{
 				HTTP:                           fmt.Sprintf("http://%s:%d/health", conf.SERVICE_ID, conf.PORT),
 				Method:                         "GET",
-				Timeout:                        "200ms",
+				Timeout:                        "5s",
 				Interval:                       "10s",
-				DeregisterCriticalServiceAfter: "1m",
+				DeregisterCriticalServiceAfter: "30s",
 			},
 		},
 	)
