@@ -14,7 +14,7 @@ frontend http-in
 
 backend servers
     balance leastconn
-    option httpchk /health
+    option httpchk GET /health
 {{ range service "server" }}
     {{ if eq .Status "passing"}}
     server {{ .ID }} {{ .Address }}:{{ .Port }} check

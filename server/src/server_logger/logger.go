@@ -1,4 +1,4 @@
-package logger
+package server_logger
 
 import "log"
 

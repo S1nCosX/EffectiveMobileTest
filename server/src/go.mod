@@ -48,6 +48,7 @@ require (
 	github.com/hashicorp/raft-autopilot v0.1.6 // indirect
 	github.com/hashicorp/serf v0.10.2 // indirect
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
+	github.com/lib/pq v1.12.3 // indirect
 	github.com/mattn/go-colorable v0.1.14 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect

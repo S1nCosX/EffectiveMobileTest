@@ -2,7 +2,7 @@ package apiRegistration
 
 import (
 	"effectivemobiletesttask/config"
-	"effectivemobiletesttask/logger"
+	"effectivemobiletesttask/server_logger"
 	"fmt"
 	"strconv"
 
@@ -10,7 +10,7 @@ import (
 )
 
 func Register() {
-	registerLogger := logger.New("Service Registration")
+	registerLogger := server_logger.New("Service Registration")
 	conf, err := config.Get()
 	if err != nil {
 		registerLogger.Panic(err)
@@ -49,7 +49,7 @@ func Register() {
 func getConsulAddr() string {
 	conf, err := config.Get()
 	if err != nil {
-		logger.New("Consul address").Panic(err)
+		server_logger.New("Consul address").Panic(err)
 	}
 	return conf.CONSUL_ADDR + ":" + strconv.FormatUint(uint64(conf.CONSUL_PORT), 10)
 }
