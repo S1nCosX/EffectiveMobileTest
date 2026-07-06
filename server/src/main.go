@@ -2,37 +2,26 @@ package main
 
 import (
 	"effectivemobiletesttask/apiRegistration"
-	"effectivemobiletesttask/db"
+	"effectivemobiletesttask/config"
+	"effectivemobiletesttask/handlers/health_handlers"
+	"effectivemobiletesttask/handlers/subscription_handlers"
 	"effectivemobiletesttask/server_logger"
+	"fmt"
 	"net/http"
 )
 
 func main() {
 	apiRegistration.Register()
-	mainLog := server_logger.New("/health")
-	db.Get()
+	logger := server_logger.New("main")
+
 	mux := http.NewServeMux()
-	mux.HandleFunc(
-		"/health",
-		http.HandlerFunc(
-			func(w http.ResponseWriter, r *http.Request) {
-				mainLog.Print("Got request: ", r)
-				if r.Method != "GET" {
-					mainLog.Print("Got wrong request type:", r.Method, "instead of GET")
-				} else {
-					w.WriteHeader(200)
-					_, err := w.Write([]byte("Health is OK"))
-					if err != nil {
-						mainLog.Print("During response got error:", err)
-					}
-				}
-			},
-		),
-	)
-	mainLog.Print(
-		http.ListenAndServe(
-			"0.0.0.0:8080",
-			mux,
-		),
-	)
+	health_handlers.AddInMux(mux)
+	subscription_handlers.AddInMux(mux)
+
+	conf, err := config.Get()
+	if err != nil {
+		logger.Panic("Got errors during config reading", err)
+	}
+
+	logger.Print(http.ListenAndServe(fmt.Sprintf("%s:%d", conf.HOST, conf.PORT), mux))
 }
