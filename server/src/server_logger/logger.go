@@ -6,7 +6,7 @@ func New(prefix string) (logger *log.Logger) {
 	logger = log.New(
 		log.Writer(),
 		"["+prefix+"]: ",
-		log.Ldate|log.LUTC,
+		log.Ldate+log.LUTC,
 	)
 	return logger
 }

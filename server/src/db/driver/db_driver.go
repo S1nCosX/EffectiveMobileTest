@@ -1,4 +1,4 @@
-package db
+package db_driver
 
 import (
 	"database/sql"
@@ -12,9 +12,7 @@ import (
 )
 
 type DatabaseDriver struct {
-	conn_str string
-	conn     *sql.DB
-	once     sync.Once
+	Conn *sql.DB
 }
 
 var (
@@ -32,9 +30,9 @@ func (*DatabaseDriver) init() {
 		logger.Panic("Config initiated  with error")
 	}
 
-	instance.conn_str = fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", conf.DB_HOST, conf.DB_PORT, conf.DB_USER, conf.DB_PW, conf.DB_NAME)
+	conn_str := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", conf.DB_HOST, conf.DB_PORT, conf.DB_USER, conf.DB_PW, conf.DB_NAME)
 
-	instance.conn, err = sql.Open("postgres", instance.conn_str)
+	instance.Conn, err = sql.Open("postgres", conn_str)
 	if err != nil {
 		logger.Panicf("Got error during db connection: %s", err)
 	}
