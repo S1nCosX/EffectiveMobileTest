@@ -32,12 +32,12 @@ sequenceDiagram
 
     Client ->> HAProxy: Request
     HAProxy ->> Consul: Request for Healthy hosts
-    Consul ->> HAProxy: Response with Healthy hosts
+    Consul -->> HAProxy: Response with Healthy hosts
     HAProxy ->> Server: Client request
     Server ->> Postgresql: DB query
-    Postgresql ->> Server: DB result
-    Server ->> HAProxy: Server response
-    HAProxy ->> Client: Response
+    Postgresql -->> Server: DB result
+    Server -->> HAProxy: Server response
+    HAProxy -->> Client: Response
 ```
 
 ## Task
@@ -62,6 +62,7 @@ Task is create CRUDL REST-API server to manage work with subscriptions on postgr
 - Postgre is also part of task
 
 #### Work scheme
+
 ```mermaid
 sequenceDiagram
     actor Client
@@ -72,10 +73,10 @@ sequenceDiagram
 
     Client ->> HAProxy: Request
     HAProxy ->> Consul: Request for Healthy hosts
-    Consul ->> HAProxy: Response with Healthy hosts
+    Consul -->> HAProxy: Response with Healthy hosts
     HAProxy ->> Server: Client request
     Server ->> Postgresql: DB query
-    Postgresql ->> Server: DB result
-    Server ->> HAProxy: Server response
-    HAProxy ->> Client: Response
+    Postgresql -->> Server: DB result
+    Server -->> HAProxy: Server response
+    HAProxy -->> Client: Response
 ```
