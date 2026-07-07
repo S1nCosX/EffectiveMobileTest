@@ -2,6 +2,7 @@ package subscription_handlers
 
 import (
 	"database/sql"
+	"effectivemobiletesttask/db/dto"
 	subscriptions_service "effectivemobiletesttask/db/table_services/subscription_service"
 	"effectivemobiletesttask/handlers"
 	"effectivemobiletesttask/server_logger"
@@ -14,8 +15,34 @@ import (
 
 var logger = server_logger.New("Subscription handlers")
 
+func parseSubscriptionMap(subscription *dto.SubscriptionReadDTO) (ret map[string]string) {
+	ret = make(map[string]string)
+
+	if subscription.ServiceName != nil {
+		ret["service_name"] = *subscription.ServiceName
+	}
+
+	if subscription.UserId != nil {
+		ret["user_id"] = *subscription.UserId
+	}
+
+	if subscription.Price != nil {
+		ret["price"] = strconv.Itoa(int(*subscription.Price))
+	}
+
+	if subscription.StartDate != nil {
+		ret["start_date"] = *subscription.StartDate
+	}
+
+	if subscription.EndDate != nil {
+		ret["end_date"] = *subscription.EndDate
+	}
+
+	return ret
+}
+
 func handleCreate(w http.ResponseWriter, r *http.Request) {
-	var subscription subscriptions_service.Subscription
+	var subscription dto.SubscriptionReadDTO
 
 	err := json.NewDecoder(r.Body).Decode(&subscription)
 	if err != nil {
@@ -23,7 +50,7 @@ func handleCreate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	id, err := subscriptions_service.Create(subscription)
+	id, err := subscriptions_service.Create(parseSubscriptionMap(&subscription))
 	if err != nil {
 		handlers.WriteResponse(w, logger, http.StatusInternalServerError, fmt.Sprintf("CREATE ERROR: %s", err))
 		return
@@ -60,32 +87,6 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, string(str))
 }
 
-func parseSubscriptionMap(subscription *subscriptions_service.Subscription) (ret map[string]string) {
-	ret = make(map[string]string)
-
-	if subscription.ServiceName != "" {
-		ret["service_name"] = subscription.ServiceName
-	}
-
-	if subscription.UserId != "" {
-		ret["user_id"] = subscription.UserId
-	}
-
-	if subscription.Price >= 0 {
-		ret["price"] = strconv.Itoa(int(subscription.Price))
-	}
-
-	if subscription.StartDate != "" {
-		ret["start_date"] = subscription.StartDate
-	}
-
-	if subscription.EndDate != nil {
-		ret["end_date"] = subscription.StartDate
-	}
-
-	return ret
-}
-
 func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 
@@ -98,7 +99,7 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var subscription subscriptions_service.Subscription
+	var subscription dto.SubscriptionReadDTO
 
 	err = json.NewDecoder(r.Body).Decode(&subscription)
 	if err != nil {

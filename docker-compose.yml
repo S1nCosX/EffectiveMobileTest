@@ -3,7 +3,7 @@ services:
     container_name: db
     image: postgres:18.4-alpine3.24
     volumes:
-      - ./psqldata:/var/lib/postgresql/18/data 
+      - ./psqldata:/var/lib/postgresql
     environment:
       - POSTGRES_DB=$DB_NAME
       - POSTGRES_USER=$DB_USER
@@ -42,8 +42,6 @@ services:
     container_name: consul
     image: consul:1.15
     command: agent -dev -client=0.0.0.0
-    ports:
-      - "8500:8500"
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:8500/v1/status/leader"]
       interval: 15s

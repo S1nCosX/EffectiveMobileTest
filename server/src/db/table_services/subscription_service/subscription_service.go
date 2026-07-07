@@ -2,18 +2,13 @@ package subscriptions_service
 
 import (
 	db "effectivemobiletesttask/db/driver"
+	"effectivemobiletesttask/db/dto"
 	"effectivemobiletesttask/server_logger"
+	"fmt"
 	"log"
+	"strconv"
+	"strings"
 )
-
-type Subscription struct {
-	Id          uint
-	ServiceName string  `json:"service_name"`
-	UserId      string  `json:"user_id"`
-	Price       uint    `json:"price"`
-	StartDate   string  `json:"start_date"`
-	EndDate     *string `json:"end_date"`
-}
 
 var (
 	driver *db.DatabaseDriver
@@ -30,30 +25,34 @@ func Init() {
 	}
 }
 
-func Create(newSub Subscription) (uint, error) {
-	var id uint
-	if newSub.EndDate != nil {
-		err := driver.Conn.QueryRow("INSERT INTO subscriptions (service_name, user_id, price, start_date, end_date) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-			newSub.ServiceName,
-			newSub.UserId,
-			newSub.Price,
-			newSub.StartDate,
-			newSub.EndDate,
-		).Scan(&id)
-		return id, err
-	} else {
-		err := driver.Conn.QueryRow("INSERT INTO subscriptions (service_name, user_id, price, start_date) VALUES ($1, $2, $3, $4) RETURNING id",
-			newSub.ServiceName,
-			newSub.UserId,
-			newSub.Price,
-			newSub.StartDate,
-		).Scan(&id)
-		return id, err
+func convertMapToQueryObjects(mp map[string]string) (variables string, args string, values []any) {
+	var variables_array []string
+	var args_array []string
+
+	i := 1
+	for k, v := range mp {
+		variables_array = append(variables_array, k)
+		args_array = append(args_array, "$"+strconv.Itoa(i))
+		values = append(values, v)
+		i++
 	}
+	variables = strings.Join(variables_array, ", ")
+	args = strings.Join(args_array, ", ")
+	return variables, args, values
 }
 
-func Read(id uint) (Subscription, error) {
-	var ret Subscription
+func Create(newSub map[string]string) (uint, error) {
+	var id uint
+
+	var fields, args, args_values = convertMapToQueryObjects(newSub)
+	query := fmt.Sprintf("INSERT INTO subscriptions (%s) VALUES (%s) RETURNING id", fields, args)
+	err := driver.Conn.QueryRow(query, args_values...).Scan(&id)
+	return id, err
+
+}
+
+func Read(id uint) (dto.SubscriptionDTO, error) {
+	var ret dto.SubscriptionDTO
 	err := driver.Conn.QueryRow("SELECT id, service_name, user_id, price, to_char(start_date, 'MM-YYYY') as start_date, to_char(end_date, 'MM-YYYY') as end_date FROM subscriptions WHERE id = $1", id).Scan(
 		&ret.Id,
 		&ret.ServiceName,
@@ -65,24 +64,18 @@ func Read(id uint) (Subscription, error) {
 	return ret, err
 }
 
-func Update(id uint, replaces map[string]string) (Subscription, error) {
-	var fields []rune
-	var args []rune
-	var args_values []string
+func Update(id uint, replaces map[string]string) (dto.SubscriptionDTO, error) {
+	var fields, args, args_values = convertMapToQueryObjects(replaces)
 
-	i := 0
-	for k, v := range replaces {
-		fields = append(fields, []rune(k+",")...)
-		args = append(fields, []rune(string(i)+",")...)
-		args_values = append(args_values)
-		i++
-	}
+	query := fmt.Sprintf("UPDATE subscriptions SET (%s) = (%s) WHERE id = $%d RETURNING new.*", fields, args, len(args_values)+1)
 
-	var ret Subscription
-	err := driver.Conn.QueryRow("UPDATE subscriptions SET (%s) = (%s) WHERE id = $%d RETURNING NEW", id).Scan(
+	args_values = append(args_values, id)
+
+	var ret dto.SubscriptionDTO
+	err := driver.Conn.QueryRow(query, args_values...).Scan(
 		&ret.Id,
-		&ret.ServiceName,
 		&ret.UserId,
+		&ret.ServiceName,
 		&ret.Price,
 		&ret.StartDate,
 		&ret.EndDate,
