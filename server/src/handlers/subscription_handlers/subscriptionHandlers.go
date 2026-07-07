@@ -41,6 +41,15 @@ func parseSubscriptionMap(subscription *dto.SubscriptionReadDTO) (ret map[string
 	return ret
 }
 
+// @Tag subscriptions
+// @Summury Create subscription
+// @Router /subscriptions [post]
+// @Accept json
+// @Produce plain
+// @Param Subsctiption body dto.SubscriptionReadDTO true "Subscription body"
+// @Success 200 {object} uint
+// @Failure 400 {string} string "invalid request body"
+// @Failure 500 {string} string "db error"
 func handleCreate(w http.ResponseWriter, r *http.Request) {
 	var subscription dto.SubscriptionReadDTO
 
@@ -60,6 +69,15 @@ func handleCreate(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, strconv.FormatUint(uint64(id), 10))
 }
 
+// @Tag subscriptions
+// @Summury Read subscription
+// @Router /subscriptions/{id} [get]
+// @Produce json
+// @Param id path uint true "ID"
+// @Success 200 {object} dto.SubscriptionDTO
+// @Failure 400 {string} string "non-numerical or less then 0 id"
+// @Failure 404 {string} string "not found"
+// @Failure 500 {string} string "db or serialization error"
 func handleRead(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
@@ -89,6 +107,16 @@ func handleRead(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, string(resp))
 }
 
+// @Tag subscriptions
+// @Summury Update subscription
+// @Router /subscriptions/{id} [put]
+// @Accept json
+// @Produce json
+// @Param id path uint true "ID"
+// @Param Subsctiption body dto.SubscriptionReadDTO true "Subscription body"
+// @Success 200 {object} dto.SubscriptionDTO
+// @Failure 400 {string} string "invalid id or body"
+// @Failure 500 {string} string "db or serialization error"
 func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 
@@ -126,6 +154,14 @@ func handleUpdate(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, fmt.Sprintf("Updated: %s", resp))
 }
 
+// @Tag subscriptions
+// @Summury Delete subscription
+// @Router /subscriptions/{id} [delete]
+// @Produce plain
+// @Param id path uint true "ID"
+// @Success 200 {string} string "deleted subscription with id"
+// @Failure 400 {string} string "non-numerical or less then 0 id"
+// @Failure 500 {string} string "db error"
 func handleDelete(w http.ResponseWriter, r *http.Request) {
 	id, err := strconv.Atoi(r.PathValue("id"))
 	if err != nil {
@@ -144,6 +180,15 @@ func handleDelete(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, "Deleted")
 }
 
+// @Tag subscriptions
+// @Summury Get list of subscription
+// @Router /subscriptions [get]
+// @Produce json
+// @Param page query uint true "Page number"
+// @Param page_size query uint true "Size of page"
+// @Success 200 {array} dto.SubscriptionDTO
+// @Failure 400 {string} string "missing or invalit page or page size"
+// @Failure 500 {string} string "db or serialization error"
 func handleList(w http.ResponseWriter, r *http.Request) {
 	if !r.URL.Query().Has("page") {
 		handlers.WriteResponse(w, logger, http.StatusBadRequest, "QUERY DOESNT HAVE page PARAMETER")
@@ -182,6 +227,17 @@ func handleList(w http.ResponseWriter, r *http.Request) {
 	handlers.WriteResponse(w, logger, http.StatusOK, string(resp))
 }
 
+// @Tag subscriptions
+// @Summury Delete subscription
+// @Router /subscriptions/price_sum [get]
+// @Produce plain
+// @Param id query string true "User id (UUID)"
+// @Param service_name query string true "Subscription service name"
+// @Param start_time query string false "Minimal subscription start time"
+// @Param end_time query string false "Maximum subscription start time"
+// @Success 200 {object} uint
+// @Failure 400 {string} string "missing or invalit id or service name"
+// @Failure 500 {string} string "db or serialization error"
 func handleSummaryInPeriod(w http.ResponseWriter, r *http.Request) {
 
 	var args []any
@@ -206,19 +262,17 @@ func handleSummaryInPeriod(w http.ResponseWriter, r *http.Request) {
 
 		args = append(args, "01-"+r.URL.Query().Get("start_time"))
 		if r.URL.Query().Has("end_time") {
-			filter += " AND end_date <= $4"
+			filter += " AND start_date <= $4"
 
 			args = append(args, "01-"+r.URL.Query().Get("end_time"))
 		}
 	} else {
 		if r.URL.Query().Has("end_time") {
-			filter += " AND end_date <= $3"
+			filter += " AND start_date <= $3"
 
 			args = append(args, "01-"+r.URL.Query().Get("end_time"))
 		}
 	}
-
-	logger.Print("got sum with args: ", args)
 
 	resp, err := subscriptions_service.GetSumInPeriod(&args, &filter)
 
@@ -230,11 +284,11 @@ func handleSummaryInPeriod(w http.ResponseWriter, r *http.Request) {
 }
 
 func AddInMux(mux *http.ServeMux) {
-	mux.HandleFunc("POST /subscriptions/create", handleCreate)
-	mux.HandleFunc("DELETE /subscriptions/delete/{id}", handleDelete)
-	mux.HandleFunc("GET /subscriptions/read/{id}", handleRead)
-	mux.HandleFunc("PUT /subscriptions/update/{id}", handleUpdate)
-	mux.HandleFunc("GET /subscriptions/list", handleList)
+	mux.HandleFunc("POST /subscriptions/", handleCreate)
+	mux.HandleFunc("DELETE /subscriptions/{id}", handleDelete)
+	mux.HandleFunc("GET /subscriptions/{id}", handleRead)
+	mux.HandleFunc("PUT /subscriptions/{id}", handleUpdate)
+	mux.HandleFunc("GET /subscriptions", handleList)
 
 	mux.HandleFunc("GET /subscriptions/price_sum", handleSummaryInPeriod)
 }
